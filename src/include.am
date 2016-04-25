@@ -392,6 +392,12 @@ noinst_PROGRAMS+= src/proxy-bio_unittest
 endif
 endif
 
+src_base64_unittest_LDADD = @SSL_LIBS@
+src_base64_unittest_SOURCES = src/base64.c
+src_base64_unittest_SOURCES+= src/base64-unittest.c
+check_PROGRAMS+= src/base64_unittest
+noinst_PROGRAMS+= src/base64_unittest
+
 # We're not shipping headers
 noinst_HEADERS+= src/routeup.h
 noinst_HEADERS+= src/test_harness.h
@@ -407,6 +413,8 @@ noinst_HEADERS+= src/test-bio.h
 noinst_HEADERS+= src/conf.h
 noinst_HEADERS+= src/dbus.h
 noinst_HEADERS+= src/platform.h
+noinst_HEADERS+= src/base64.h
+
 
 if HAVE_ANDROID
 noinst_HEADERS+= src/common/android.h
