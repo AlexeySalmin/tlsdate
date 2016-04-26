@@ -18,6 +18,7 @@
 struct proxy_ctx {
   char *host;
   uint16_t port;
+  char *userpass;
   int connected;
   int (*connect)(BIO *b);
 };
@@ -28,5 +29,6 @@ BIO *BIO_new_proxy();
 int BIO_proxy_set_type (BIO *b, const char *type);
 int BIO_proxy_set_host (BIO *b, const char *host);
 void BIO_proxy_set_port (BIO *b, uint16_t port);
+void BIO_proxy_set_userpass (BIO *b, const char *userpass);
 
 #endif /* !PROXY_BIO_H */

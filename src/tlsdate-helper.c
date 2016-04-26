@@ -128,15 +128,26 @@ validate_proxy_port(const char *port)
 }
 
 static void
-parse_proxy_uri(char *proxy, char **scheme, char **host, char **port)
+parse_proxy_uri(char *proxy, char **scheme, char **host, char **port, char **userpass)
 {
-  /* Expecting a URI, so: <scheme> '://' <host> ':' <port> */
+  char *at;
+
+  /* Expecting a URI, so: <scheme> '://' [<user:pass> '@'] <host> ':' <port> */
   *scheme = proxy;
   proxy = strstr(proxy, "://");
   if (!proxy)
     die("malformed proxy URI");
   *proxy = '\0'; /* terminate scheme string */
   proxy += strlen("://");
+
+  at = strchr(proxy, '@');
+  if (at) {
+    *at = '\0'; /* terminate userpass string */
+    *userpass = proxy;
+    proxy = at + 1;
+  } else {
+    *userpass = 0;
+  }
 
   *host = proxy;
   proxy = strchr(proxy, ':');
@@ -146,6 +157,7 @@ parse_proxy_uri(char *proxy, char **scheme, char **host, char **port)
 
   *port = proxy;
 
+  /* No need to validate userpass at this point because it's sent in base64 */
   validate_proxy_scheme(*scheme);
   validate_proxy_host(*host);
   validate_proxy_port(*port);
@@ -159,6 +171,7 @@ setup_proxy(BIO *ssl)
   char *scheme;
   char *proxy_host;
   char *proxy_port;
+  char *userpass;
 
   if (!proxy)
     return;
@@ -169,11 +182,12 @@ setup_proxy(BIO *ssl)
    * target) and swap out the connect BIO's target host and port so it'll
    * connect to the proxy instead.
    */
-  parse_proxy_uri(proxy, &scheme, &proxy_host, &proxy_port);
+  parse_proxy_uri(proxy, &scheme, &proxy_host, &proxy_port, &userpass);
   bio = BIO_new_proxy();
   BIO_proxy_set_type(bio, scheme);
   BIO_proxy_set_host(bio, host);
   BIO_proxy_set_port(bio, atoi(port));
+  BIO_proxy_set_userpass(bio, userpass);
   host = proxy_host;
   port = proxy_port;
   BIO_push(ssl, bio);

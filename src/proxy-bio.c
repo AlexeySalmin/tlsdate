@@ -36,6 +36,7 @@
 #endif
 
 #include "src/proxy-bio.h"
+#include "src/base64.h"
 
 int socks4a_connect (BIO *b);
 int socks5_connect (BIO *b);
@@ -50,6 +51,7 @@ int proxy_new (BIO *b)
   ctx->connect = NULL;
   ctx->host = NULL;
   ctx->port = 0;
+  ctx->userpass = NULL;
   b->init = 1;
   b->flags = 0;
   b->ptr = ctx;
@@ -66,6 +68,9 @@ int proxy_free (BIO *b)
     free (c->host);
   c->host = NULL;
   b->ptr = NULL;
+  if (c->userpass)
+    free (c->userpass);
+  c->userpass = NULL;
   free (c);
   return 1;
 }
@@ -265,6 +270,18 @@ int http_connect (BIO *b)
     return -1;
   if ( (size_t) r != strlen(buf))
     return 0;
+  if (ctx->userpass) {
+    char *authline;
+    base64_encode(ctx->userpass, strlen(ctx->userpass), &authline);
+    snprintf (buf, sizeof (buf), "Proxy-Authorization: Basic %s\r\n", authline);
+    free(authline);
+    r = BIO_write (b->next_bio, buf, strlen (buf));
+    if ( -1 == r )
+      return -1;
+    if ( (size_t) r != strlen(buf))
+      return 0;
+  }
+
   strcpy (buf, "\r\n");
   r = BIO_write (b->next_bio, buf, strlen (buf));
   if ( -1 == r )
@@ -428,3 +445,10 @@ void API BIO_proxy_set_port (BIO *b, uint16_t port)
   struct proxy_ctx *ctx = (struct proxy_ctx *) b->ptr;
   ctx->port = port;
 }
+
+void API BIO_proxy_set_userpass (BIO *b, const char *userpass)
+{
+  struct proxy_ctx *ctx = (struct proxy_ctx *) b->ptr;
+  ctx->userpass = strdup (userpass);
+}
+

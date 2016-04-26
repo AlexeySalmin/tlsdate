@@ -175,7 +175,7 @@ if POLARSSL
 src_tlsdate_helper_SOURCES+= src/proxy-polarssl.c
 else
 # OpenSSL is our default if we're not using PolarSSL
-src_tlsdate_helper_SOURCES+= src/proxy-bio.c
+src_tlsdate_helper_SOURCES+= src/proxy-bio.c src/base64.c
 endif
 src_tlsdate_helper_SOURCES+= src/util.c
 
@@ -247,6 +247,7 @@ src_proxy_bio_unittest_SOURCES = src/proxy-bio.c
 src_proxy_bio_unittest_SOURCES+= src/proxy-bio-unittest.c
 src_proxy_bio_unittest_SOURCES+= src/test-bio.c
 src_proxy_bio_unittest_SOURCES+= src/util.c
+src_proxy_bio_unittest_SOURCES+= src/base64.c
 if HAVE_SECCOMP_FILTER
 src_proxy_bio_unittest_SOURCES+= src/seccomp.c
 endif
